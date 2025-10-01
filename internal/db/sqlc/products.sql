@@ -10,3 +10,7 @@ VALUES (
 
 )
 RETURNING *;
+
+
+-- name: GetAllProducts :many
+SELECT * FROM products;

@@ -57,3 +57,22 @@ func (cfg *APIConfig) ProductCreationHandler(w http.ResponseWriter, r *http.Requ
 
 
 
+func (cfg *APIConfig) GetProductsHandler (w http.ResponseWriter, r *http.Request) {
+	logger.Log.Info("entered get products handler")
+
+	products, err := cfg.DB.GetAllProducts(r.Context())
+	if err != nil {
+		http.Error(w, "databse opertaion to get products failed", http.StatusInternalServerError)
+		return
+	}
+	if len(products) == 0 {
+		http.Error(w, "no products in databse", http.StatusNoContent)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+
+	if err := json.NewEncoder(w).Encode(products); err != nil {
+        http.Error(w, "failed to encode products", http.StatusInternalServerError)
+        return
+    }
+}
