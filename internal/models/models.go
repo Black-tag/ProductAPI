@@ -39,10 +39,24 @@ type ProductCreationrequest struct {
 }
 
 type ProductCreationResponse struct {
-	ID        uuid.UUID
-	Name      string
-	Price     string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	PostedBy  uuid.UUID
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	Price     string    `json:"price"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	PostedBy  uuid.UUID `json:"posted_by"`
+}
+
+type UpdateProductRequest struct {
+	Name  string `json:"name"`
+	Price string `json:"price"`
+}
+
+type UpdatedProductResponse struct {
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	Price     string    `json:"price"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	PostedBy  uuid.UUID `json:"posted_by"`
 }

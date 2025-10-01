@@ -44,6 +44,8 @@ func main() {
 	mux.HandleFunc("POST /api/v1/login", cfg.UserLoginHandler)
 	mux.Handle("POST /api/v1/product", protected(http.HandlerFunc(cfg.ProductCreationHandler)))
 	mux.HandleFunc("GET /api/v1/product", cfg.GetProductsHandler)
+	mux.Handle("PUT /api/v1/product/{productID}", protected(http.HandlerFunc(cfg.UpdateProductsHandler)))
+	mux.Handle("DELETE /api/v1/product/{productID}", protected(http.HandlerFunc(cfg.DeleteProductHandler)))
 
 	logger.Log.Info("server starting on 8090")
 	if err := http.ListenAndServe(":8090", mux); err != nil {

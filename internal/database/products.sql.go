@@ -88,3 +88,52 @@ func (q *Queries) GetAllProducts(ctx context.Context) ([]Product, error) {
 	}
 	return items, nil
 }
+
+const getProductByID = `-- name: GetProductByID :one
+SELECT id, name, price, created_at, updated_at, posted_by FROM products
+WHERE id = $1
+`
+
+func (q *Queries) GetProductByID(ctx context.Context, id uuid.UUID) (Product, error) {
+	row := q.db.QueryRowContext(ctx, getProductByID, id)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Price,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.PostedBy,
+	)
+	return i, err
+}
+
+const updateProduct = `-- name: UpdateProduct :one
+UPDATE products
+SET 
+    name = $2,
+    price = $3,
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, name, price, created_at, updated_at, posted_by
+`
+
+type UpdateProductParams struct {
+	ID    uuid.UUID
+	Name  string
+	Price string
+}
+
+func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error) {
+	row := q.db.QueryRowContext(ctx, updateProduct, arg.ID, arg.Name, arg.Price)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Price,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.PostedBy,
+	)
+	return i, err
+}

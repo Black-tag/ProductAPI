@@ -19,3 +19,18 @@ SELECT * FROM products;
 -- name: DeleteProductByID :exec
 DELETE FROM products
 WHERE id = $1;
+
+
+-- name: GetProductByID :one
+SELECT * FROM products
+WHERE id = $1;
+
+
+-- name: UpdateProduct :one
+UPDATE products
+SET 
+    name = $2,
+    price = $3,
+    updated_at = NOW()
+WHERE id = $1
+RETURNING *;
