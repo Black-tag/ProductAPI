@@ -4,10 +4,12 @@ import (
 	"database/sql"
 	"net/http"
 	"os"
+
 	_ "github.com/lib/pq"
 
 	"github.com/Black-tag/productAPI/internal/api"
 	"github.com/Black-tag/productAPI/internal/database"
+	"github.com/Black-tag/productAPI/internal/middleware"
 
 	"github.com/Black-tag/productAPI/internal/logger"
 )
@@ -27,15 +29,20 @@ func main() {
 		logger.Log.Fatal(err.Error())
 	}
 	dbQueries := database.New(db)
+	secret := os.Getenv("SECRET")
 
 	cfg := api.APIConfig{
 		DB: dbQueries,
+		SECRET: secret,
 	}
 
 
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("POST /api/v1/users", cfg.CreateUserHandler)
+	mux.HandleFunc("POST /api/v1/login", cfg.UserLoginHandler)
+
+	_ = middleware.Authenticate(cfg.SECRET, cfg.DB)
 
 
 

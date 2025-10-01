@@ -1,7 +1,9 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
+	"time"
 
 	"net/http"
 
@@ -73,4 +75,65 @@ func (cfg *APIConfig)CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	
 	w.Write(resp)
 
+}
+
+
+
+func (cfg *APIConfig) UserLoginHandler(w http.ResponseWriter, r *http.Request) {
+	var req models.LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	user, err := cfg.DB.GetUserByEmail(r.Context(), req.Email)
+	if err != nil {
+		http.Error(w, "user does not exists",http.StatusNotFound)
+		return
+	}
+	if err := utils.CheckPasswordAndHash(req.Password, user.Hashedpassword); err != nil {
+		http.Error(w, "invalid credentials", http.StatusUnauthorized)
+		return
+	}
+	token, err := utils.MakeJWT(user.ID, cfg.SECRET, time.Hour)
+	if err != nil {
+		http.Error(w, "cannot create jwt", http.StatusInternalServerError)
+		return
+	}
+	refreshToken, err := utils.MakeRefreshToken()
+	if err != nil {
+		http.Error(w, "cannot create refresh token", http.StatusInternalServerError)
+		return
+	}
+	refresExpiresAt := time.Now().Add(30 * 24 * time.Hour)
+
+	err = cfg.DB.CreateRefreshToken(r.Context(), database.CreateRefreshTokenParams{
+		Token: refreshToken,
+		UserID: user.ID,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		ExpiresAt: refresExpiresAt,
+		RevokedAt: sql.NullTime{},
+
+	})
+	if err != nil {
+		http.Error(w, "cannot create refresh toke", http.StatusInternalServerError)
+		return
+	}
+	respPayload := models.LoginResponse{
+		ID: user.ID,
+		Email: user.Email,
+		CreatedAt: user.CreatedAt.Time,
+		UpdatedAt: user.UpdatedAt.Time,
+		Role: user.Role,
+		Token: token,
+		RefreshToken: refreshToken,
+	}
+	resp , err := json.Marshal(respPayload)
+	if err != nil {
+		http.Error(w, "cannot marshal json", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(resp)
 }
