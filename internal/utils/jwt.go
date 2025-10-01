@@ -13,18 +13,12 @@ import (
 	"github.com/google/uuid"
 )
 
-
-
-
-
-
-
 func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIN time.Duration) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256,jwt.RegisteredClaims{
-		Issuer: "productAPI",
-		IssuedAt: jwt.NewNumericDate(time.Now()),
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+		Issuer:    "productAPI",
+		IssuedAt:  jwt.NewNumericDate(time.Now()),
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiresIN)),
-		Subject: userID.String(),
+		Subject:   userID.String(),
 	})
 
 	signingKey := []byte(tokenSecret)
@@ -36,7 +30,6 @@ func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIN time.Duration) (str
 	return signedToken, nil
 
 }
-
 
 func ValidateJWT(tokenstring, tokenSecret string) (uuid.UUID, error) {
 	claims := &jwt.RegisteredClaims{}
@@ -55,15 +48,13 @@ func ValidateJWT(tokenstring, tokenSecret string) (uuid.UUID, error) {
 
 	}
 
-	userID , err := uuid.Parse(claims.Subject)
+	userID, err := uuid.Parse(claims.Subject)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("error parsing userID") 
+		return uuid.Nil, fmt.Errorf("error parsing userID")
 	}
 
 	return userID, nil
 }
-
-
 
 func GetBearerToken(headers http.Header) (string, error) {
 	authHeader := headers.Get("Authorization")

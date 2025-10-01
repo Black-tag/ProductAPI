@@ -17,6 +17,7 @@ type Product struct {
 	Price     string
 	CreatedAt sql.NullTime
 	UpdatedAt sql.NullTime
+	PostedBy  uuid.UUID
 }
 
 type RefreshToken struct {

@@ -15,8 +15,8 @@ import (
 	"go.uber.org/zap"
 )
 
-func (cfg *APIConfig)CreateUserHandler(w http.ResponseWriter, r *http.Request) {
-	
+func (cfg *APIConfig) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
+
 	logger.Log.Info("entered user creation handler")
 
 	w.Header().Set("Content-Type", "application/json")
@@ -25,12 +25,12 @@ func (cfg *APIConfig)CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w,"bad request format", http.StatusBadRequest)
+		http.Error(w, "bad request format", http.StatusBadRequest)
 		return
 	}
 	logger.Log.Info("captured request",
-	zap.String("email_in_request", req.Email),
-	zap.String("password_in_request", req.Password),
+		zap.String("email_in_request", req.Email),
+		zap.String("password_in_request", req.Password),
 	)
 
 	hashdepassword, err := utils.HashPassword(req.Password)
@@ -40,7 +40,7 @@ func (cfg *APIConfig)CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := cfg.DB.CreateUser(r.Context(), database.CreateUserParams{
-		Email: req.Email,
+		Email:          req.Email,
 		Hashedpassword: hashdepassword,
 	})
 	if err != nil {
@@ -49,21 +49,18 @@ func (cfg *APIConfig)CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respPayload := database.User{
-		ID: user.ID,
-		Email: user.Email,
+		ID:        user.ID,
+		Email:     user.Email,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
-		Role: user.Role,
-
+		Role:      user.Role,
 	}
 
-	
 	logger.Log.Info("user_response_payload",
 		zap.String("userID", user.ID.String()),
 		zap.String("user_emai", user.Email),
 		zap.Time("user_Created_at", user.CreatedAt.Time),
 		zap.Time("user_updated_at", user.UpdatedAt.Time),
-
 	)
 	resp, err := json.Marshal(respPayload)
 	if err != nil {
@@ -72,12 +69,10 @@ func (cfg *APIConfig)CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 
 	}
-	
+
 	w.Write(resp)
 
 }
-
-
 
 func (cfg *APIConfig) UserLoginHandler(w http.ResponseWriter, r *http.Request) {
 	var req models.LoginRequest
@@ -88,7 +83,7 @@ func (cfg *APIConfig) UserLoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	user, err := cfg.DB.GetUserByEmail(r.Context(), req.Email)
 	if err != nil {
-		http.Error(w, "user does not exists",http.StatusNotFound)
+		http.Error(w, "user does not exists", http.StatusNotFound)
 		return
 	}
 	if err := utils.CheckPasswordAndHash(req.Password, user.Hashedpassword); err != nil {
@@ -108,28 +103,27 @@ func (cfg *APIConfig) UserLoginHandler(w http.ResponseWriter, r *http.Request) {
 	refresExpiresAt := time.Now().Add(30 * 24 * time.Hour)
 
 	err = cfg.DB.CreateRefreshToken(r.Context(), database.CreateRefreshTokenParams{
-		Token: refreshToken,
-		UserID: user.ID,
+		Token:     refreshToken,
+		UserID:    user.ID,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 		ExpiresAt: refresExpiresAt,
 		RevokedAt: sql.NullTime{},
-
 	})
 	if err != nil {
 		http.Error(w, "cannot create refresh toke", http.StatusInternalServerError)
 		return
 	}
 	respPayload := models.LoginResponse{
-		ID: user.ID,
-		Email: user.Email,
-		CreatedAt: user.CreatedAt.Time,
-		UpdatedAt: user.UpdatedAt.Time,
-		Role: user.Role,
-		Token: token,
+		ID:           user.ID,
+		Email:        user.Email,
+		CreatedAt:    user.CreatedAt.Time,
+		UpdatedAt:    user.UpdatedAt.Time,
+		Role:         user.Role,
+		Token:        token,
 		RefreshToken: refreshToken,
 	}
-	resp , err := json.Marshal(respPayload)
+	resp, err := json.Marshal(respPayload)
 	if err != nil {
 		http.Error(w, "cannot marshal json", http.StatusInternalServerError)
 		return

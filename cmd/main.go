@@ -32,24 +32,22 @@ func main() {
 	secret := os.Getenv("SECRET")
 
 	cfg := api.APIConfig{
-		DB: dbQueries,
+		DB:     dbQueries,
 		SECRET: secret,
 	}
 
-
 	mux := http.NewServeMux()
+
+	protected := middleware.Authenticate(cfg.SECRET, cfg.DB)
 
 	mux.HandleFunc("POST /api/v1/users", cfg.CreateUserHandler)
 	mux.HandleFunc("POST /api/v1/login", cfg.UserLoginHandler)
-
-	_ = middleware.Authenticate(cfg.SECRET, cfg.DB)
-
-
+	mux.Handle("POST /api/v1/product", protected(http.HandlerFunc(cfg.ProductCreationHandler)))
 
 	logger.Log.Info("server starting on 8090")
 	if err := http.ListenAndServe(":8090", mux); err != nil {
 		logger.Log.Fatal("server not started")
 		return
 	}
-	
+
 }
