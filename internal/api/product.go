@@ -9,6 +9,7 @@ import (
 	"github.com/Black-tag/productAPI/internal/logger"
 	"github.com/Black-tag/productAPI/internal/models"
 	"github.com/google/uuid"
+	
 )
 
 func (cfg *APIConfig) ProductCreationHandler(w http.ResponseWriter, r *http.Request) {
@@ -75,4 +76,26 @@ func (cfg *APIConfig) GetProductsHandler (w http.ResponseWriter, r *http.Request
         http.Error(w, "failed to encode products", http.StatusInternalServerError)
         return
     }
+}
+
+func (cfg *APIConfig) DeleteProducthandler (w http.ResponseWriter, r *http.Request) {
+	logger.Log.Info("entered product deletion handler")
+	productIdStr := r.PathValue("productID")
+	productID, err := uuid.Parse(productIdStr)
+	if err != nil {
+		http.Error(w, "cannot parse str into uuid", http.StatusInternalServerError)
+		return
+
+	}
+
+	err = cfg.DB.DeleteProductByID(r.Context(), productID)
+	if err != nil {
+		http.Error(w, "databse deletion failed", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+
+
+
+
 }

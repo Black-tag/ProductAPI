@@ -14,3 +14,8 @@ RETURNING *;
 
 -- name: GetAllProducts :many
 SELECT * FROM products;
+
+
+-- name: DeleteProductByID :exec
+DELETE FROM products
+WHERE id = $1;
