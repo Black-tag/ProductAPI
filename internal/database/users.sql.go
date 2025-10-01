@@ -12,7 +12,7 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (id, email, hashedpassword, created_at, updated_at)
+INSERT INTO users (id, email, hashedPassword, created_at, updated_at)
 VALUES (
     gen_random_uuid(),
     $1,

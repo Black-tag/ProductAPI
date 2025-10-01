@@ -15,8 +15,8 @@ type Product struct {
 	ID        uuid.UUID
 	Name      string
 	Price     string
-	CreatedAt sql.NullTime
-	UpdatedAt sql.NullTime
+	CreatedAt time.Time
+	UpdatedAt time.Time
 	PostedBy  uuid.UUID
 }
 
@@ -33,7 +33,7 @@ type User struct {
 	ID             uuid.UUID
 	Email          string
 	Hashedpassword string
-	CreatedAt      sql.NullTime
-	UpdatedAt      sql.NullTime
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 	Role           string
 }

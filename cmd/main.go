@@ -6,6 +6,8 @@ import (
 	"os"
 
 	_ "github.com/lib/pq"
+	httpSwagger "github.com/swaggo/http-swagger"
+    _ "github.com/Black-tag/productAPI/docs"
 
 	"github.com/Black-tag/productAPI/internal/api"
 	"github.com/Black-tag/productAPI/internal/database"
@@ -46,6 +48,7 @@ func main() {
 	mux.HandleFunc("GET /api/v1/product", cfg.GetProductsHandler)
 	mux.Handle("PUT /api/v1/product/{productID}", protected(http.HandlerFunc(cfg.UpdateProductsHandler)))
 	mux.Handle("DELETE /api/v1/product/{productID}", protected(http.HandlerFunc(cfg.DeleteProductHandler)))
+	mux.Handle("/swagger/", httpSwagger.WrapHandler)
 
 	logger.Log.Info("server starting on 8090")
 	if err := http.ListenAndServe(":8090", mux); err != nil {

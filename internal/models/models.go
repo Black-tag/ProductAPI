@@ -33,7 +33,7 @@ type LoginResponse struct {
 	RefreshToken string    `json:"refresh_token"`
 }
 
-type ProductCreationrequest struct {
+type ProductCreationRequest struct {
 	Name  string  `json:"name"`
 	Price float64 `json:"price"`
 }
@@ -53,6 +53,15 @@ type UpdateProductRequest struct {
 }
 
 type UpdatedProductResponse struct {
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	Price     string    `json:"price"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	PostedBy  uuid.UUID `json:"posted_by"`
+}
+
+type ProductResponse struct {
 	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
 	Price     string    `json:"price"`

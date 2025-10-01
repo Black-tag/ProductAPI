@@ -10,7 +10,18 @@ import (
 	"github.com/Black-tag/productAPI/internal/models"
 	"github.com/google/uuid"
 )
-
+// @Summary Create Products
+// @Description Existing users can create aproducts
+// @Tags products
+// @Accept json
+// @Produce json
+// @Param request body models.ProductCreationRequest true "Product creation data"
+// @Success 201 {object} models.ProductCreationResponse
+// @Failure 400 {object} string "Bad Request - Invalid input"
+// @Failure 404 {object} string "Not Found - Resource doesn't exist"
+// @Failure 500 {object} string "Internal Server Error"
+// @Router /api/v1/product [post]
+// @Security BearerAuth
 func (cfg *APIConfig) ProductCreationHandler(w http.ResponseWriter, r *http.Request) {
 	logger.Log.Info("entered Product creation handler")
 	userIDValue := r.Context().Value("userID")
@@ -20,7 +31,7 @@ func (cfg *APIConfig) ProductCreationHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	var req models.ProductCreationrequest
+	var req models.ProductCreationRequest
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -41,8 +52,8 @@ func (cfg *APIConfig) ProductCreationHandler(w http.ResponseWriter, r *http.Requ
 		ID:        product.ID,
 		Name:      product.Name,
 		Price:     product.Price,
-		CreatedAt: product.CreatedAt.Time,
-		UpdatedAt: product.UpdatedAt.Time,
+		CreatedAt: product.CreatedAt,
+		UpdatedAt: product.UpdatedAt,
 		PostedBy:  product.PostedBy,
 	}
 
@@ -52,7 +63,16 @@ func (cfg *APIConfig) ProductCreationHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 }
-
+// @Summary Get existing  products
+// @Description  users can get all existing Products
+// @Tags products
+// @Accept json
+// @Produce json
+// @Success 200 {object} database.Product
+// @Failure 400 {object} string "Bad Request - Invalid input"
+// @Failure 500 {object} string "Internal Server Error"
+// @Router /api/v1/product [get]
+// @Security BearerAuth
 func (cfg *APIConfig) GetProductsHandler(w http.ResponseWriter, r *http.Request) {
 	logger.Log.Info("entered get products handler")
 
@@ -66,6 +86,7 @@ func (cfg *APIConfig) GetProductsHandler(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "no products in databse", http.StatusNoContent)
 		return
 	}
+	
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewEncoder(w).Encode(products); err != nil {
@@ -74,6 +95,20 @@ func (cfg *APIConfig) GetProductsHandler(w http.ResponseWriter, r *http.Request)
 	}
 }
 
+
+// @Summary Delete an existing  product
+// @Description admin can delete product using their id
+// @Tags products
+// @Accept json
+// @Produce json
+// @Success 204 {string} string "No content"
+// @Failure 400 {object} string "Bad Request - Invalid input"
+// @Failure 401 {object} string "Unauthorized - Missing/invalid credentials"
+// @Failure 403 {object} string "Forbidden - Insufficient permissions"
+// @Failure 500 {object} string "Internal Server Error"
+// @Param productID path string true "ProductID" 
+// @Router /api/v1/product/{productID} [delete]
+// @Security BearerAuth
 func (cfg *APIConfig) DeleteProductHandler(w http.ResponseWriter, r *http.Request) {
 	logger.Log.Info("entered product deletion handler")
 
@@ -114,6 +149,19 @@ func (cfg *APIConfig) DeleteProductHandler(w http.ResponseWriter, r *http.Reques
 
 }
 
+// @Summary Update an existing  product
+// @Description Existing users can update their product
+// @Tags products
+// @Accept json
+// @Produce json
+// @Param bugid path string true "productID" example:"87f0ea02-7b24-41bd-8418-0831a019fc87"
+// @Param request body models.UpdateProductRequest true "product updation data"
+// @Success 200 {object} models.UpdatedProductResponse
+// @Failure 400 {object} string "Bad Request - Invalid input"
+// @Failure 401 {object} string "Unauthorized - Missing/invalid credentials"
+// @Failure 500 {object} string "Internal Server Error"
+// @Router /api/v1/product/{productID} [put]
+// @Security BearerAuth
 func (cfg *APIConfig) UpdateProductsHandler(w http.ResponseWriter, r *http.Request) {
 	logger.Log.Info("entered update products Hnadler")
 	userIDValue := r.Context().Value("userID")
@@ -162,8 +210,8 @@ func (cfg *APIConfig) UpdateProductsHandler(w http.ResponseWriter, r *http.Reque
 		ID:        updatedProduct.ID,
 		Name:      updatedProduct.Name,
 		Price:     updatedProduct.Price,
-		CreatedAt: updatedProduct.CreatedAt.Time,
-		UpdatedAt: updatedProduct.UpdatedAt.Time,
+		CreatedAt: updatedProduct.CreatedAt,
+		UpdatedAt: updatedProduct.UpdatedAt,
 		PostedBy:  updatedProduct.PostedBy,
 	}
 

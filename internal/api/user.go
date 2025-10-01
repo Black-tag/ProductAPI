@@ -15,6 +15,17 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary Creates a new  user
+// @Description Creates user with Email and Password
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param request body models.UserRequest true "User creation data"
+// @Success 201 {object} database.User
+// @Failure 400 {object} string "Bad Request - Invalid input"
+// @Failure 500 {object} string "Internal Server Error"
+// @Router /api/v1/users [post]
+// @Security BearerAuth
 func (cfg *APIConfig) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	logger.Log.Info("entered user creation handler")
@@ -30,7 +41,6 @@ func (cfg *APIConfig) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 	}
 	logger.Log.Info("captured request",
 		zap.String("email_in_request", req.Email),
-		zap.String("password_in_request", req.Password),
 	)
 
 	hashdepassword, err := utils.HashPassword(req.Password)
@@ -59,8 +69,8 @@ func (cfg *APIConfig) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 	logger.Log.Info("user_response_payload",
 		zap.String("userID", user.ID.String()),
 		zap.String("user_emai", user.Email),
-		zap.Time("user_Created_at", user.CreatedAt.Time),
-		zap.Time("user_updated_at", user.UpdatedAt.Time),
+		zap.Time("user_Created_at", user.CreatedAt),
+		zap.Time("user_updated_at", user.UpdatedAt),
 	)
 	resp, err := json.Marshal(respPayload)
 	if err != nil {
@@ -69,11 +79,24 @@ func (cfg *APIConfig) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 		return
 
 	}
-
+	w.WriteHeader(http.StatusCreated)
 	w.Write(resp)
 
 }
 
+
+// @Summary Login an existing  user
+// @Description Existing users can login using email and password
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param request body models.LoginRequest true "user login data"
+// @Success 200 {object} models.LoginResponse
+// @Failure 400 {object} string "Bad Request - Invalid input"
+// @Failure 401 {object} string "Invalid credentials"
+// @Failure 500 {object} string "Internal Server Error"
+// @Router /api/v1/login [post]
+// @Security BearerAuth
 func (cfg *APIConfig) UserLoginHandler(w http.ResponseWriter, r *http.Request) {
 	var req models.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -100,14 +123,14 @@ func (cfg *APIConfig) UserLoginHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "cannot create refresh token", http.StatusInternalServerError)
 		return
 	}
-	refresExpiresAt := time.Now().Add(30 * 24 * time.Hour)
+	refreshExpiresAt := time.Now().Add(30 * 24 * time.Hour)
 
 	err = cfg.DB.CreateRefreshToken(r.Context(), database.CreateRefreshTokenParams{
 		Token:     refreshToken,
 		UserID:    user.ID,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		ExpiresAt: refresExpiresAt,
+		ExpiresAt: refreshExpiresAt,
 		RevokedAt: sql.NullTime{},
 	})
 	if err != nil {
@@ -117,8 +140,8 @@ func (cfg *APIConfig) UserLoginHandler(w http.ResponseWriter, r *http.Request) {
 	respPayload := models.LoginResponse{
 		ID:           user.ID,
 		Email:        user.Email,
-		CreatedAt:    user.CreatedAt.Time,
-		UpdatedAt:    user.UpdatedAt.Time,
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
 		Role:         user.Role,
 		Token:        token,
 		RefreshToken: refreshToken,
@@ -129,5 +152,6 @@ func (cfg *APIConfig) UserLoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	w.Write(resp)
 }
