@@ -4,12 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	
+	"strings"
 
 	"github.com/Black-tag/productAPI/internal/database"
 	"github.com/Black-tag/productAPI/internal/logger"
 	"github.com/Black-tag/productAPI/internal/models"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
+
 // @Summary Create Products
 // @Description Existing users can create aproducts
 // @Tags products
@@ -56,9 +60,10 @@ func (cfg *APIConfig) ProductCreationHandler(w http.ResponseWriter, r *http.Requ
 		UpdatedAt: product.UpdatedAt,
 		PostedBy:  product.PostedBy,
 	}
-
+	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		http.Error(w, "failed to encode products", http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "failed to encode products"})
 		return
 	}
 
@@ -84,6 +89,8 @@ func (cfg *APIConfig) GetProductsHandler(w http.ResponseWriter, r *http.Request)
 
 	if len(products) == 0 {
 		http.Error(w, "no products in databse", http.StatusNoContent)
+		w.Header().Set("Content-Type", "application/json")
+    	w.Write([]byte("[]"))
 		return
 	}
 	
@@ -171,14 +178,32 @@ func (cfg *APIConfig) UpdateProductsHandler(w http.ResponseWriter, r *http.Reque
 		http.Error(w, "userID not in context ", http.StatusUnauthorized)
 		return
 	}
-	userrole := r.Context().Value("role")
+	userroleINterface := r.Context().Value("role")
+	userrole, ok := userroleINterface.(string)
+	if !ok {
+		http.Error(w, "invalid role in context", http.StatusInternalServerError)
+		return
+	}
 
-	productIDStr := r.PathValue("productID")
+	// productIDStr := r.PathValue("productID")
+	productIDStr := strings.TrimPrefix(r.URL.Path, "/api/v1/product/")
+	if productIDStr == "" {
+    	http.Error(w, "productID missing in URL", http.StatusBadRequest)
+    	return
+	}
 	productID, err := uuid.Parse(productIDStr)
 	if err != nil {
 		http.Error(w, "cannot parse product id into uuid", http.StatusBadRequest)
 		return
 	}
+	logger.Log.Info("ProductID received in URL", 
+    zap.String("productID", productIDStr))
+	logger.Log.Info("Updating product", 
+    zap.String("productID", productIDStr),
+    zap.String("userID", userID.String()))
+	logger.Log.Info("ProductID received",
+    zap.String("productID", productID.String()))
+
 	var req models.UpdateProductRequest
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -186,8 +211,16 @@ func (cfg *APIConfig) UpdateProductsHandler(w http.ResponseWriter, r *http.Reque
 		return
 
 	}
+	// priceFloat, err := strconv.ParseFloat(req.Price, 64)
+	// if err != nil {
+	// 	http.Error(w, "invalid price format", http.StatusBadRequest)
+	// 	return
+	// }
+	// priceStr := fmt.Sprintf("%.2f", priceFloat)
+
 	product, err := cfg.DB.GetProductByID(r.Context(), productID)
 	if err != nil {
+		logger.Log.Error("Failed to fetch product by ID", zap.String("productID", productID.String()), zap.Error(err))
 		http.Error(w, "product not found", http.StatusNotFound)
 		return
 	}
@@ -196,12 +229,20 @@ func (cfg *APIConfig) UpdateProductsHandler(w http.ResponseWriter, r *http.Reque
 		return
 
 	}
+	priceStr := fmt.Sprintf("%.2f", req.Price)
 	updatedProduct, err := cfg.DB.UpdateProduct(r.Context(), database.UpdateProductParams{
 		ID:    productID,
 		Name:  req.Name,
-		Price: req.Price,
+		Price: priceStr,
 	})
 	if err != nil {
+		 logger.Log.Error("Failed to update product", 
+        zap.String("productID", productID.String()), 
+        zap.String("name", req.Name), 
+        zap.String("price", req.Price),
+        zap.Error(err),
+    )
+		logger.Log.Error("Failed to update product", zap.String("productID", productID.String()), zap.Error(err))
 		http.Error(w, "databse operation failed", http.StatusInternalServerError)
 		return
 	}

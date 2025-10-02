@@ -40,6 +40,7 @@ func main() {
 
 	mux := http.NewServeMux()
 
+
 	protected := middleware.Authenticate(cfg.SECRET, cfg.DB)
 
 	mux.HandleFunc("POST /api/v1/users", cfg.CreateUserHandler)
@@ -51,7 +52,7 @@ func main() {
 	mux.Handle("/swagger/", httpSwagger.WrapHandler)
 
 	logger.Log.Info("server starting on 8090")
-	if err := http.ListenAndServe(":8090", mux); err != nil {
+	if err := http.ListenAndServe(":8090", middleware.CorsMiddleware(mux)); err != nil {
 		logger.Log.Fatal("server not started")
 		return
 	}
